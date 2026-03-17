@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Thi đua lớp 3/2</title>
+
+<style>
+body {
+  font-family: Arial;
+  text-align: center;
+  background: linear-gradient(to bottom, #dbeafe, #fef9c3);
+}
+
+/* tiêu đề */
+h1 { color: #1e3a8a; margin-bottom: 5px; }
+h3 { margin-top: 0; color: #444; }
+
+/* bảng */
+table {
+  margin: auto;
+  border-collapse: collapse;
+  width: 85%;
+  background: white;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+th {
+  background: #3b82f6;
+  color: white;
+}
+
+/* nút */
+button {
+  padding: 6px 10px;
+  margin: 3px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.plus { background: #22c55e; color: white; }
+.minus { background: #ef4444; color: white; }
+.reset { background: orange; color: white; }
+.rank { background: purple; color: white; }
+
+/* top 8 */
+#top8 {
+  margin-top: 20px;
+  font-weight: bold;
+}
+
+/* ===== BẢNG ĐO TIẾNG ỒN ===== */
+#noiseBox {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  width: 180px;
+  background: white;
+  border: 3px solid #ccc;
+  border-radius: 15px;
+  padding: 10px;
+}
+
+#noiseText {
+  font-weight: bold;
+  margin: 5px 0;
+}
+
+canvas {
+  background: #f9fafb;
+  border-radius: 50%;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🏆 ĐIỂM THI ĐUA TUẦN LỚP 3/2</h1>
+<h3>Năm học 2025 - 2026 | GVCN: Thầy Phan Tuấn Lộc</h3>
+
+<button class="reset" onclick="resetScores()">🔄 Reset tuần</button>
+<button class="rank" onclick="showTop8()">🏆 Xếp hạng Top 8</button>
+
+<table id="bang"></table>
+
+<div id="top8"></div>
+
+<!-- 🔊 ĐO TIẾNG ỒN -->
+<div id="noiseBox">
+  <div>🔊 Độ ồn lớp học</div>
+  <canvas id="noiseCanvas" width="150" height="150"></canvas>
+  <div id="noiseText">Chưa bật</div>
+  <button onclick="startNoise()">Bật mic</button>
+</div>
+
+<script>
+// ===== DANH SÁCH HỌC SINH =====
+const students = [
+"Trần Mai Diệp Anh","Hồ Ngọc Thiên Ân","Lê Gia Bảo","Huỳnh Bảo Châu","Đinh Thị Bảo Châu",
+"Đỗ Bảo Châu","Quách Khả Di","Lê Tâm Đức","Đỗ Phạm Ngọc Hân","Nguyễn Mỹ Hoàng",
+"Hứa Vĩ Hùng","Ngô Nguyễn Tuấn Kiệt","Trần Hữu Khang","Nguyễn Gia Khánh","Lê Nguyễn Mạnh Khương",
+"Huỳnh Tuyết Lâm","Thái Bình Minh","Trương Nguyễn Bảo Minh","Nguyễn Bảo Nam","Nguyễn Quốc Ngân",
+"Phan Bảo Ngân","Phạm Như Ngọc","Nguyễn Tuệ Nhi","Huỳnh Bảo Như","Phó Khải Phi",
+"Nguyễn Trần Thiên Phúc","Vương Minh Đăng Quang","Lý Gia Quý","Lã Khánh Toàn","Huỳnh Anh Thư",
+"Nguyễn Trần Minh Trí","Hồ Uy","Nguyễn Mai Tuấn Vinh"
+];
+
+let scores = JSON.parse(localStorage.getItem("scores")) || new Array(33).fill(0);
+
+function save() {
+  localStorage.setItem("scores", JSON.stringify(scores));
+}
+
+function updateTable() {
+  const table = document.getElementById("bang");
+  table.innerHTML = `
+    <tr>
+      <th>STT</th>
+      <th>Tên học sinh</th>
+      <th>Điểm</th>
+      <th>Thao tác</th>
+    </tr>
+  `;
+
+  students.forEach((name, i) => {
+    const row = table.insertRow();
+    row.insertCell(0).innerText = i + 1;
+    row.insertCell(1).innerText = name;
+    row.insertCell(2).innerText = scores[i];
+
+    const actionCell = row.insertCell(3);
+
+    const plusBtn = document.createElement("button");
+    plusBtn.innerText = "+";
+    plusBtn.className = "plus";
+    plusBtn.onclick = () => {
+      scores[i]++;
+      save();
+      updateTable();
+    };
+
+    const minusBtn = document.createElement("button");
+    minusBtn.innerText = "-";
+    minusBtn.className = "minus";
+    minusBtn.onclick = () => {
+      scores[i]--;
+      save();
+      updateTable();
+    };
+
+    actionCell.appendChild(plusBtn);
+    actionCell.appendChild(minusBtn);
+  });
+}
+
+// reset
+function resetScores() {
+  if (confirm("Bạn có chắc muốn reset điểm tuần?")) {
+    scores = new Array(33).fill(0);
+    save();
+    updateTable();
+    document.getElementById("top8").innerHTML = "";
+  }
+}
+
+// top 8
+function showTop8() {
+  let arr = students.map((name, i) => ({name, score: scores[i]}));
+  arr.sort((a, b) => b.score - a.score);
+
+  let html = "<h3>🏆 TOP 8</h3>";
+  arr.slice(0,8).forEach((s,i)=>{
+    html += `${i+1}. ${s.name} - ${s.score} điểm<br>`;
+  });
+
+  document.getElementById("top8").innerHTML = html;
+}
+
+// ===== ĐO TIẾNG ỒN =====
+let audioContext, analyser, dataArray;
+
+function startNoise() {
+  navigator.mediaDevices.getUserMedia({audio: true}).then(stream => {
+    audioContext = new AudioContext();
+    analyser = audioContext.createAnalyser();
+    const source = audioContext.createMediaStreamSource(stream);
+    source.connect(analyser);
+
+    analyser.fftSize = 256;
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    drawNoise();
+  });
+}
+
+function drawNoise() {
+  requestAnimationFrame(drawNoise);
+
+  analyser.getByteFrequencyData(dataArray);
+  let volume = dataArray.reduce((a,b)=>a+b)/dataArray.length;
+
+  const canvas = document.getElementById("noiseCanvas");
+  const ctx = canvas.getContext("2d");
+
+  ctx.clearRect(0,0,150,150);
+
+  // vòng nền
+  ctx.beginPath();
+  ctx.arc(75,75,60,0,Math.PI*2);
+  ctx.stroke();
+
+  // vòng mức ồn
+  ctx.beginPath();
+  ctx.arc(75,75,60,0,Math.PI*(volume/100));
+  ctx.lineWidth = 8;
+
+  let text = "";
+  if(volume < 30){
+    ctx.strokeStyle = "green";
+    text = "🟢 Mức trật tự";
+  } else if(volume < 60){
+    ctx.strokeStyle = "orange";
+    text = "🟡 Mức ồn bình thường";
+  } else {
+    ctx.strokeStyle = "red";
+    text = "🔴 Mức rất ồn";
+  }
+
+  ctx.stroke();
+  document.getElementById("noiseText").innerText = text;
+}
+
+updateTable();
+</script>
+
+</body>
+</html>
